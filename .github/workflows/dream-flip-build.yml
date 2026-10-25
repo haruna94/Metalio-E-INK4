@@ -1,0 +1,64 @@
+name: Dream Flip firmware build
+
+on:
+  push:
+    branches:
+      - dream-flip-dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dream-flip-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compile firmware (no release)
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.5.4
+      options: --user root
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Prepare ESP-IDF environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f /opt/esp/entrypoint.sh ]]; then
+            source /opt/esp/entrypoint.sh >/dev/null || true
+          fi
+          if [[ -n "${IDF_PATH:-}" && -f "${IDF_PATH}/export.sh" ]]; then
+            source "${IDF_PATH}/export.sh"
+          fi
+          python3 scripts/blank_cloudzao_endpoints.py
+          python3 scripts/blank_cloudzao_endpoints.py --check
+          chmod +x merge_firmware.sh
+          ./merge_firmware.sh
+
+      - name: Resolve firmware filename
+        id: firmware
+        shell: bash
+        run: |
+          set -euo pipefail
+          VER="$(sed -n 's/^set(PROJECT_VER "\([^"]*\)").*/\1/p' CMakeLists.txt | head -1)"
+          test -n "$VER"
+          FILE="firmware/metalio-e-ink4-${VER}.bin"
+          test -f "$FILE"
+          echo "path=$FILE" >> "$GITHUB_OUTPUT"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          ls -lh "$FILE"
+
+      - name: Upload flashable firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dream-flip-firmware-${{ steps.firmware.outputs.version }}
+          path: ${{ steps.firmware.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
