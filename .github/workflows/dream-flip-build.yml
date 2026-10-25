@@ -37,6 +37,14 @@ jobs:
           if [[ -n "${IDF_PATH:-}" && -f "${IDF_PATH}/export.sh" ]]; then
             source "${IDF_PATH}/export.sh"
           fi
+          # The component-manager archive omits the qoi_conv git submodule, but
+          # esp_mmap_assets imports its helper when generating split image assets.
+          MMAP_TOOL_DIR="managed_components/espressif__esp_mmap_assets/py_tool"
+          if [[ -d "$MMAP_TOOL_DIR" && ! -f "$MMAP_TOOL_DIR/qoi-conv/qoi.py" ]]; then
+            git clone --depth 1 https://github.com/espressif2022/qoi_conv.git /tmp/qoi_conv
+            cp -a /tmp/qoi_conv/qoi-conv "$MMAP_TOOL_DIR/qoi-conv"
+            python3 -m pip install -r /tmp/qoi_conv/requirements.txt
+          fi
           python3 scripts/blank_cloudzao_endpoints.py
           python3 scripts/blank_cloudzao_endpoints.py --check
           chmod +x merge_firmware.sh
