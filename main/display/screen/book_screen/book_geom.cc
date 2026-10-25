@@ -7,6 +7,7 @@
 #include "book_screen/reader/book_reader_body.h"
 #include "book_screen/reader/book_reader_overlay.h"
 
+#include <algorithm>
 #include <lvgl.h>
 #include <cstdint>
 #include <esp_log.h>
