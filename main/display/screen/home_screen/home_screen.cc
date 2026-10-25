@@ -34,7 +34,7 @@ bool Home_gray_dither_ready = false;
 
     const char *Home_AppNameTask() { return Lang::Strings::HOME_APP_TASK; }
     const char *Home_AppNameAssistant() { return Lang::Strings::HOME_APP_ASSISTANT; }
-    const char *Home_AppNameBook() { return Lang::Strings::HOME_APP_BOOK; }
+    const char *Home_AppNameBook() { return "Dream Pocket"; }
     const char *Home_AppNameWallpaper() { return Lang::Strings::HOME_APP_WALLPAPER; }
     const char *Home_AppNameCloud() { return Lang::Strings::HOME_APP_CLOUD; }
     const char *Home_AppNameSettings() { return Lang::Strings::HOME_APP_SETTINGS; }
