@@ -254,6 +254,74 @@ void RenderReaderPage() {
     }
 }
 
+static void DreamPocketVirtualKeyClicked(lv_event_t* e) {
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+        return;
+    }
+    const char* action = static_cast<const char*>(lv_event_get_user_data(e));
+    if (action == nullptr) {
+        return;
+    }
+    if (std::strcmp(action, "toc") == 0) {
+        BookLvAsync([](void*) { OpenReadToc(); });
+    } else if (std::strcmp(action, "settings") == 0) {
+        BookScreen::OnBootClick();
+    } else {
+        BookScreen::OnVkKey(action);
+    }
+}
+
+static lv_obj_t* CreateDreamPocketTouchBar(lv_obj_t* parent) {
+    lv_obj_t* bar = lv_obj_create(parent);
+    lv_obj_remove_style_all(bar);
+    lv_obj_set_width(bar, LV_HOR_RES);
+    lv_obj_set_height(bar, std::max<lv_coord_t>(140, LV_VER_RES / 3));
+    lv_obj_set_style_bg_color(bar, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bar, 2, 0);
+    lv_obj_set_style_border_color(bar, lv_color_black(), 0);
+    lv_obj_set_style_pad_all(bar, 6, 0);
+    lv_obj_set_style_pad_row(bar, 4, 0);
+    lv_obj_set_style_pad_column(bar, 6, 0);
+    lv_obj_set_flex_flow(bar, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(bar, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
+                          LV_FLEX_ALIGN_CENTER);
+    Book_DisableScroll(bar);
+
+    const char* labels[4] = {"上一頁", "下一頁", "目錄", "設定"};
+    const char* actions[4] = {"vk_prev", "vk_next", "toc", "settings"};
+    for (int row_index = 0; row_index < 2; ++row_index) {
+        lv_obj_t* row = lv_obj_create(bar);
+        lv_obj_remove_style_all(row);
+        lv_obj_set_width(row, LV_PCT(100));
+        lv_obj_set_flex_grow(row, 1);
+        lv_obj_set_style_pad_column(row, 6, 0);
+        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
+                              LV_FLEX_ALIGN_CENTER);
+        Book_DisableScroll(row);
+        for (int col = 0; col < 2; ++col) {
+            const int index = row_index * 2 + col;
+            lv_obj_t* button = lv_btn_create(row);
+            lv_obj_set_flex_grow(button, 1);
+            lv_obj_set_height(button, LV_PCT(100));
+            lv_obj_set_style_bg_color(button, lv_color_white(), 0);
+            lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
+            lv_obj_set_style_border_width(button, 1, 0);
+            lv_obj_set_style_border_color(button, lv_color_black(), 0);
+            lv_obj_set_style_radius(button, 8, 0);
+            lv_obj_add_event_cb(button, DreamPocketVirtualKeyClicked, LV_EVENT_CLICKED,
+                                const_cast<char*>(actions[index]));
+            lv_obj_t* label = lv_label_create(button);
+            lv_label_set_text(label, labels[index]);
+            lv_obj_set_style_text_font(label, Book_ItemFont(), 0);
+            lv_obj_set_style_text_color(label, lv_color_black(), 0);
+            lv_obj_center(label);
+        }
+    }
+    return bar;
+}
+
 lv_obj_t* CreateReaderScreen(const reader::BookInfo& info) {
     auto& st = Book_State();
     // 硬护栏：layout/open worker 仍用旧 session 时禁止 make_unique 拆掉（UAF）
@@ -351,6 +419,11 @@ lv_obj_t* CreateReaderScreen(const reader::BookInfo& info) {
     lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, 0);
     Book_DisableScroll(footer);
     st.reader.page_label = footer;
+
+    // Dream Pocket touch controls occupy the lower third; the native reader viewport
+    // is reduced above them so text is never painted underneath the controls.
+    st.reader.keyboard_bar = CreateDreamPocketTouchBar(scr);
+    lv_obj_align(st.reader.keyboard_bar, LV_ALIGN_BOTTOM_MID, 0, -kFooterH);
 
     // 先展示加载页，再后台解析；避免点「开始阅读」后长时间无响应
     ShowOpenProgress(0);
