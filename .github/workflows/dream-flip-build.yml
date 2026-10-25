@@ -37,16 +37,12 @@ jobs:
           if [[ -n "${IDF_PATH:-}" && -f "${IDF_PATH}/export.sh" ]]; then
             source "${IDF_PATH}/export.sh"
           fi
-          # esp_mmap_assets imports qoi-conv.qoi, but its component archive can
-          # leave the helper directory present without the importable module.
+          # Keep the helper outside managed_components so IDF integrity checks stay valid.
           MMAP_TOOL_DIR="managed_components/espressif__esp_mmap_assets/py_tool"
-          mkdir -p "$MMAP_TOOL_DIR"
-          rm -rf "$MMAP_TOOL_DIR/qoi-conv"
           git clone --depth 1 https://github.com/espressif2022/qoi_conv.git /tmp/qoi_conv
-          cp -a /tmp/qoi_conv/qoi-conv "$MMAP_TOOL_DIR/qoi-conv"
           python3 -m pip install -r /tmp/qoi_conv/requirements.txt
-          export PYTHONPATH="$PWD/$MMAP_TOOL_DIR${PYTHONPATH:+:$PYTHONPATH}"
-          test -f "$MMAP_TOOL_DIR/qoi-conv/qoi.py"
+          export PYTHONPATH="/tmp/qoi_conv:$PWD/$MMAP_TOOL_DIR${PYTHONPATH:+:$PYTHONPATH}"
+          test -f /tmp/qoi_conv/qoi-conv/qoi.py
           python3 -c "import importlib; importlib.import_module('qoi-conv.qoi'); print('qoi helper import OK')"
           python3 scripts/blank_cloudzao_endpoints.py
           python3 scripts/blank_cloudzao_endpoints.py --check
