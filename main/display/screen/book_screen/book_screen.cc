@@ -69,6 +69,7 @@ lv_obj_t* BookScreen::Create() {
     // 封面由详情屏 DELETE 释放；此处不 Reset，避免旧屏仍引用时 UAF
     st.reader.read_scr = nullptr;
     st.reader.content = nullptr;
+    st.reader.keyboard_bar = nullptr;
     st.reader.page_label = nullptr;
     st.reader.title_label = nullptr;
     st.reader.status_label = nullptr;
