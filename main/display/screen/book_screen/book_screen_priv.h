@@ -106,6 +106,7 @@ struct BookUiState {
         std::unique_ptr<reader::BookSession> session;
         lv_obj_t* read_scr = nullptr;
         lv_obj_t* content = nullptr;
+        lv_obj_t* keyboard_bar = nullptr; // Dream Pocket touch controls below the reading viewport
         lv_obj_t* page_label = nullptr;
         lv_obj_t* title_label = nullptr;
         lv_obj_t* open_bar = nullptr;
