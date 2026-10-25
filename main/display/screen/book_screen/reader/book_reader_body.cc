@@ -16,6 +16,8 @@
 #include "book_screen/book_nav.h"
 #include "book_screen/reader/book_reader_overlay.h"
 
+#include <algorithm>
+#include <cstring>
 #include <lvgl.h>
 #include <memory>
 #include <utility>
