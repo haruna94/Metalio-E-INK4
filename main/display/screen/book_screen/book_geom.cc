@@ -81,7 +81,21 @@ void ApplyReaderPageGeometry(ReaderGeomMode mode) {
     const bool show_footer =
         (mode == ReaderGeomMode::kOverlayList) || (BookReaderPrefsHideProgress() == 0);
     const lv_coord_t footer_h = show_footer ? kFooterH : 0;
-    const lv_coord_t body_h = LV_VER_RES - footer_h;
+    const bool show_touch_bar = mode == ReaderGeomMode::kImmersive &&
+                                st.reader.keyboard_bar != nullptr &&
+                                lv_obj_is_valid(st.reader.keyboard_bar);
+    const lv_coord_t touch_bar_h = show_touch_bar ? std::max<lv_coord_t>(140, LV_VER_RES / 3) : 0;
+    const lv_coord_t body_h = LV_VER_RES - footer_h - touch_bar_h;
+    if (st.reader.keyboard_bar != nullptr && lv_obj_is_valid(st.reader.keyboard_bar)) {
+        if (show_touch_bar) {
+            lv_obj_set_height(st.reader.keyboard_bar, touch_bar_h);
+            lv_obj_align(st.reader.keyboard_bar, LV_ALIGN_BOTTOM_MID, 0, -footer_h);
+            lv_obj_clear_flag(st.reader.keyboard_bar, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_move_foreground(st.reader.keyboard_bar);
+        } else {
+            lv_obj_add_flag(st.reader.keyboard_bar, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
 
     if (st.reader.page_label != nullptr && lv_obj_is_valid(st.reader.page_label)) {
         if (show_footer) {
